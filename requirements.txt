@@ -1,0 +1,6 @@
+# Core dependencies
+requests==2.32.3
+python-dotenv==1.0.1
+
+# Jupyter notebooks
+notebook==7.3.2
