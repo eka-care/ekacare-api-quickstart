@@ -1,0 +1,108 @@
+# Basic 
+@base_url=https://api.eka.care
+@client_id=
+@client_secret=
+@file_path=../../assets/eka_example_lab_report.pdf
+@file_name=lab-report.pdf
+@mime_type=application/pdf
+
+### API Documentation: Get Client Token
+# This API retrieves an access token using client credentials.
+# 
+# - Endpoint: POST /connect-auth/v1/account/login
+# - Headers:
+#   - Content-Type: application/json
+# - Body:
+#   - `client_id`: Your client ID
+#   - `client_secret`: Your client secret
+# - Response:
+#   - JSON containing the `access_token`
+###
+
+POST {{base_url}}/connect-auth/v1/account/login
+Content-Type: application/json
+
+{
+  "client_id": "{{client_id}}",
+  "client_secret": "{{client_secret}}"
+}
+
+# Save the `access_token` from the response to use in subsequent requests
+> {% access_token = response.body.access_token %}
+
+###
+
+### API Documentation: Upload Lab Reports
+# This API uploads one or more lab reports to the server.
+#
+# - Endpoint: POST /mr/api/v2/docs?dt=lr
+# - Query Parameters:
+#   - `task`: Optional tasks, such as `pii` or `smart`
+# - Headers:
+#   - Authorization: Bearer token
+# - Body:
+#   - File(s): Multipart form-data with file content
+# - Response:
+#   - JSON containing `document_id`
+###
+
+POST {{base_url}}/mr/api/v2/docs?dt=lr&task=pii&task=smart
+Authorization: Bearer {{access_token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="{{file_name}}"
+Content-Type: {{mime_type}}
+
+< {{file_path}}
+--boundary--
+
+# Save the `document_id` from the response to use in subsequent requests
+> {% document_id = response.body.document_id %}
+
+###
+
+### API Documentation: Retrieve JSON Data
+# This API retrieves JSON data using the `document_id`.
+#
+# - Endpoint: GET /health/api/v1/fhir/retrieve
+# - Query Parameters:
+#   - `identifier`: Derived from `document_id` (prefixed with "ekacare-sr-")
+# - Headers:
+#   - Authorization: Bearer token
+# - Response:
+#   - JSON containing the retrieved data
+###
+
+GET {{base_url}}/health/api/v1/fhir/retrieve?identifier=ekacare-sr-{{document_id}}
+Authorization: Bearer {{access_token}}
+
+###
+
+### API Documentation: Retrieve MR Result
+# This API retrieves the result of processing a document.
+#
+# - Endpoint: GET /mr/api/v1/docs/{document_id}/result
+# - Headers:
+#   - Authorization: Bearer token
+# - Response:
+#   - JSON containing the result
+###
+
+GET {{base_url}}/mr/api/v1/docs/{{document_id}}/result
+Authorization: Bearer {{access_token}}
+
+###
+
+### API Documentation: Delete Document
+# This API deletes a document using its `document_id`.
+#
+# - Endpoint: DELETE /mr/api/v1/docs/{document_id}
+# - Headers:
+#   - Authorization: Bearer token
+# - Response:
+#   - Status code indicating success or failure
+###
+
+DELETE {{base_url}}/mr/api/v1/docs/{{document_id}}
+Authorization: Bearer {{access_token}}
